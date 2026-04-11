@@ -5,8 +5,13 @@ from app.services.verification.file import verify_file
 from app.services.verification.link import verify_link
 from app.services.verification.manual import verify_manual
 
-from app.services.blockchain.client import release_payment
 from app.db.models import save_verification
+
+
+def release_payment(milestone_id):
+    """Stub — will call blockchain client once contracts are deployed."""
+    print(f"[STUB] release_payment called for milestone {milestone_id} — contracts not deployed yet")
+
 
 
 def queue_verification(data):

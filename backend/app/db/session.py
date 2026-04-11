@@ -14,28 +14,45 @@ Usage:
 """
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy import create_engine
 
 from app.config.settings import get_settings
 
 settings = get_settings()
 
-# ── Engine ────────────────────────────────────────────────────────────────────
-# connect_args only needed for SQLite (disables same-thread check for async)
+# ── Async Engine (for FastAPI routes) ─────────────────────────────────────────
 connect_args = {"check_same_thread": False} if "sqlite" in settings.database_url else {}
 
 engine = create_async_engine(
     settings.database_url,
-    echo=settings.debug,          # Log SQL queries in debug mode
+    echo=settings.debug,
     future=True,
     connect_args=connect_args,
 )
 
-# ── Session factory ───────────────────────────────────────────────────────────
+# ── Async Session factory ─────────────────────────────────────────────────────
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
-    expire_on_commit=False,       # Keep objects usable after commit
+    expire_on_commit=False,
+    autoflush=False,
+    autocommit=False,
+)
+
+# ── Sync Engine + SessionLocal (for models.py helper functions) ───────────────
+# Convert async URL to sync: sqlite+aiosqlite → sqlite, postgresql+asyncpg → postgresql
+_sync_url = settings.database_url.replace("+aiosqlite", "").replace("+asyncpg", "+psycopg2")
+_sync_connect_args = {"check_same_thread": False} if "sqlite" in _sync_url else {}
+
+sync_engine = create_engine(
+    _sync_url,
+    echo=settings.debug,
+    connect_args=_sync_connect_args,
+)
+
+SessionLocal = sessionmaker(
+    bind=sync_engine,
     autoflush=False,
     autocommit=False,
 )
@@ -43,6 +60,7 @@ AsyncSessionLocal = async_sessionmaker(
 # ── Base class for all models ─────────────────────────────────────────────────
 class Base(DeclarativeBase):
     pass
+
 
 
 # ── Dependency for FastAPI routes ─────────────────────────────────────────────

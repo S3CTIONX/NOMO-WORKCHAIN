@@ -7,6 +7,8 @@
 # ── Web framework ─────────────────────────────────────────────────
 fastapi==0.111.0
 uvicorn[standard]==0.29.0      # ASGI server with hot reload
+requests==2.31.0               # Sync HTTP client (verification services)
+
 
 # ── Blockchain ────────────────────────────────────────────────────
 web3==6.18.0                   # Monad is EVM-compatible — web3.py works directly
